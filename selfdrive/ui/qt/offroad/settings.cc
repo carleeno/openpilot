@@ -40,6 +40,12 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
       "../assets/img_experimental_white.svg",
     },
     {
+      "StockTaccEnabledToggle",
+      tr("Use Tesla's TACC"),
+      tr("Use Tesla's built-in Traffic Aware Cruise Control instead of openpilot longitudinal control."),
+      "../assets/offroad/icon_speed_limit.png",
+    },
+    {
       "DisengageOnAccelerator",
       tr("Disengage on Accelerator Pedal"),
       tr("When enabled, pressing the accelerator pedal will disengage openpilot."),
