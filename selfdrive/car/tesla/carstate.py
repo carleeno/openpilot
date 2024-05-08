@@ -194,6 +194,7 @@ class CarState(CarStateBase):
   def get_adas_can_parser(CP):  # Vehicle Can on Model 3
     if CP.carFingerprint in [CAR.TESLA_AP3_MODEL3, CAR.TESLA_AP3_MODELY]:
       messages = [
+        ("VCLEFT_switchStatus", 20),
         ("SCCM_leftStalk", 10),
         ("SCCM_rightStalk", 10),
         ("SCCM_steeringAngleSensor", 100),
