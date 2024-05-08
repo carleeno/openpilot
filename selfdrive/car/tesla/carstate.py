@@ -168,8 +168,8 @@ class CarState(CarStateBase):
         ("IBST_status", 25),
         ("DI_state", 10),
         ("EPAS3S_sysStatus", 100),
-        ("RightSeat", 10),
-        ("LeftSeat", 10),
+        ("RightSeat", 20),
+        ("LeftSeat", 20),
       ]
 
     return CANParser(DBC[CP.carFingerprint]['chassis'], messages, CANBUS.chassis)
