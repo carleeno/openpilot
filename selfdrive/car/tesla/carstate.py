@@ -120,7 +120,7 @@ class CarState(CarStateBase):
     if self.models_raven:
       ret.seatbeltUnlatched = (cp.vl["DriverSeat"]["buckleStatus"] != 1)
     elif self.model3_y:
-      ret.seatbeltUnlatched = cp_adas.vl["VCLEFT_switchStatus"]["VCLEFT_frontBuckleSwitch"] == 1
+      ret.seatbeltUnlatched = cp.vl["RightSeat"]["frontBuckleStatus"] == 0 or cp.vl["LeftSeat"]["frontBuckleStatus"] == 0
     else:
       ret.seatbeltUnlatched = (cp.vl["SDM1"]["SDM_bcklDrivStatus"] != 1)
 
@@ -167,7 +167,9 @@ class CarState(CarStateBase):
         ("DI_systemStatus", 100),
         ("IBST_status", 25),
         ("DI_state", 10),
-        ("EPAS3S_sysStatus", 100)
+        ("EPAS3S_sysStatus", 100),
+        ("RightSeat", 10),
+        ("LeftSeat", 10),
       ]
 
     return CANParser(DBC[CP.carFingerprint]['chassis'], messages, CANBUS.chassis)
@@ -192,7 +194,6 @@ class CarState(CarStateBase):
   def get_adas_can_parser(CP):  # Vehicle Can on Model 3
     if CP.carFingerprint in [CAR.TESLA_AP3_MODEL3, CAR.TESLA_AP3_MODELY]:
       messages = [
-        ("VCLEFT_switchStatus", 20),
         ("SCCM_leftStalk", 10),
         ("SCCM_rightStalk", 10),
         ("SCCM_steeringAngleSensor", 100),
