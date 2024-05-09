@@ -120,7 +120,7 @@ class CarState(CarStateBase):
     if self.models_raven:
       ret.seatbeltUnlatched = (cp.vl["DriverSeat"]["buckleStatus"] != 1)
     elif self.model3_y:
-      ret.seatbeltUnlatched = not (cp.vl["RightSeat"]["frontBuckleStatus"] == 0 or cp.vl["LeftSeat"]["frontBuckleStatus"] == 0)
+      ret.seatbeltUnlatched = cp.vl["DriverSeat"]["buckleStatus"] != 1
     else:
       ret.seatbeltUnlatched = (cp.vl["SDM1"]["SDM_bcklDrivStatus"] != 1)
 
