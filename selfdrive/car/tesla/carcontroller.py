@@ -25,12 +25,14 @@ class CarController(CarControllerBase):
 
     # Temp disable steering on a hands_on_fault, and allow for user override
     hands_on_fault = CS.steer_warning == "EAC_ERROR_HANDS_ON" and CS.hands_on_level >= 3
+    hands_on = CS.hands_on_level >= 1
     lkas_enabled = CC.latActive and not hands_on_fault
 
     if self.frame % 2 == 0:
       if lkas_enabled:
         # Angular rate limit based on speed
-        apply_angle = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgo, CarControllerParams)
+        apply_angle = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgo,
+                                                   CarControllerParams)
 
         # To not fault the EPS
         apply_angle = clip(apply_angle, CS.out.steeringAngleDeg - 20, CS.out.steeringAngleDeg + 20)
@@ -38,7 +40,7 @@ class CarController(CarControllerBase):
         apply_angle = CS.out.steeringAngleDeg
 
       self.apply_angle_last = apply_angle
-      can_sends.append(self.tesla_can.create_steering_control(apply_angle, lkas_enabled, (self.frame // 2) % 16))
+      can_sends.append(self.tesla_can.create_steering_control(apply_angle, lkas_enabled and not hands_on, (self.frame // 2) % 16))
 
     # Longitudinal control (in sync with stock message, about 40Hz)
     if self.CP.openpilotLongitudinalControl:
@@ -51,11 +53,13 @@ class CarController(CarControllerBase):
       if self.model3_y:
         counter = CS.das_control["DAS_controlCounter"]
         buses = [(self.packer, CANBUS.chassis)]
-        can_sends.extend(self.tesla_can.create_longitudinal_commands(acc_state, target_speed, min_accel, max_accel, counter, buses))
+        can_sends.extend(
+          self.tesla_can.create_longitudinal_commands(acc_state, target_speed, min_accel, max_accel, counter, buses))
       else:
         buses = [(self.packer, CANBUS.chassis), (self.pt_packer, CANBUS.powertrain)]
         while len(CS.das_control_counters) > 0:
-          can_sends.extend(self.tesla_can.create_longitudinal_commands(acc_state, target_speed, min_accel, max_accel, CS.das_control_counters.popleft(), buses))
+          can_sends.extend(self.tesla_can.create_longitudinal_commands(acc_state, target_speed, min_accel, max_accel,
+                                                                       CS.das_control_counters.popleft(), buses))
 
     # Cancel on user steering override, since there is no steering torque blending
     if hands_on_fault:
@@ -70,8 +74,11 @@ class CarController(CarControllerBase):
       else:
         # Spam every possible counter value, otherwise it might not be accepted
         for counter in range(16):
-          can_sends.append(self.tesla_can.create_action_request(CS.msg_stw_actn_req, pcm_cancel_cmd, CANBUS.chassis, counter))
-          can_sends.append(self.tesla_can.create_action_request(CS.msg_stw_actn_req, pcm_cancel_cmd, CANBUS.autopilot_chassis, counter))
+          can_sends.append(
+            self.tesla_can.create_action_request(CS.msg_stw_actn_req, pcm_cancel_cmd, CANBUS.chassis, counter))
+          can_sends.append(
+            self.tesla_can.create_action_request(CS.msg_stw_actn_req, pcm_cancel_cmd, CANBUS.autopilot_chassis,
+                                                 counter))
 
     # TODO: HUD control
 
