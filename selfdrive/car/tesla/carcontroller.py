@@ -24,8 +24,7 @@ class CarController(CarControllerBase):
     can_sends = []
 
     # Temp disable steering on a hands_on_fault, and allow for user override
-    hands_on_fault = CS.steer_warning == "EAC_ERROR_HANDS_ON" and CS.hands_on_level >= 3
-    hands_on = CS.hands_on_level >= 1
+    hands_on_fault = CS.steer_warning == "EAC_ERROR_HANDS_ON" and CS.hands_on_level >= 2
     lkas_enabled = CC.latActive and not hands_on_fault
 
     if self.frame % 2 == 0:
@@ -40,7 +39,7 @@ class CarController(CarControllerBase):
         apply_angle = CS.out.steeringAngleDeg
 
       self.apply_angle_last = apply_angle
-      can_sends.append(self.tesla_can.create_steering_control(apply_angle, lkas_enabled and not hands_on, (self.frame // 2) % 16))
+      can_sends.append(self.tesla_can.create_steering_control(apply_angle, lkas_enabled, (self.frame // 2) % 16))
 
     # Longitudinal control (in sync with stock message, about 40Hz)
     if self.CP.openpilotLongitudinalControl:
