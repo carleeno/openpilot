@@ -124,7 +124,10 @@ class CarState(CarStateBase):
     else:
       ret.seatbeltUnlatched = (cp.vl["SDM1"]["SDM_bcklDrivStatus"] != 1)
 
-    # TODO: blindspot
+    # Blindspot
+    if self.model3_y:
+      ret.leftBlindspot = cp_cam.vl["DAS_status"]["DAS_blindSpotRearLeft"] != 0
+      ret.rightBlindspot = cp_cam.vl["DAS_status"]["DAS_blindSpotRearRight"] != 0
 
     # AEB
     ret.stockAeb = (cp_cam.vl["DAS_control"]["DAS_aebEvent"] == 1)
@@ -168,7 +171,7 @@ class CarState(CarStateBase):
         ("IBST_status", 25),
         ("DI_state", 10),
         ("EPAS3S_sysStatus", 100),
-        ("DriverSeat", 10),
+        ("DriverSeat", 10)
       ]
 
     return CANParser(DBC[CP.carFingerprint]['chassis'], messages, CANBUS.chassis)
@@ -185,6 +188,7 @@ class CarState(CarStateBase):
     elif CP.carFingerprint in [CAR.TESLA_AP3_MODEL3, CAR.TESLA_AP3_MODELY]:
       messages = [
         ("DAS_control", 25),
+        ("DAS_status", 2)
       ]
 
     return CANParser(DBC[CP.carFingerprint]['chassis'], messages, CANBUS.autopilot_chassis)
