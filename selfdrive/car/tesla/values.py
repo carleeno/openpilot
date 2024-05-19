@@ -73,6 +73,10 @@ class CarControllerParams:
   JERK_LIMIT_MAX = 8
   JERK_LIMIT_MIN = -8
   ACCEL_TO_SPEED_MULTIPLIER = 3
+  TORQUE_TO_ANGLE_MULTIPLIER_BP = [0., 5., 10., 15., 20., 30., 40.]
+  TORQUE_TO_ANGLE_MULTIPLIER_V = [5., 3.4, 1.7, 1.1, .84, .56, .42]  # Higher = easier to influence the steering manually
+  TORQUE_TO_ANGLE_DEADZONE = 0.5  # This equates to hands-on level 1, so we don't allow override if not hands-on
+  TORQUE_TO_ANGLE_CLIP = 3. # Steering disengages at 2.5 Nm, this limit exists only in case the EPAS gives bad data
 
   def __init__(self, CP):
     pass

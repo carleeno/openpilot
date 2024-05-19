@@ -1,10 +1,21 @@
-from openpilot.common.numpy_fast import clip
+from openpilot.common.numpy_fast import clip, interp
 from opendbc.can.packer import CANPacker
 from openpilot.selfdrive.car import apply_std_steer_angle_limits
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from openpilot.selfdrive.car.tesla.teslacan import TeslaCAN
 from openpilot.selfdrive.car.tesla.values import DBC, CarControllerParams
 
+
+def torque_blended_angle(apply_angle, torsion_bar_torque, speed):
+  strength = interp(speed, CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_BP, CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_V)
+  deadzone = CarControllerParams.TORQUE_TO_ANGLE_DEADZONE
+  limit = CarControllerParams.TORQUE_TO_ANGLE_CLIP
+
+  if abs(torsion_bar_torque) < deadzone:
+    torque = 0
+  else:
+    torque = torsion_bar_torque - deadzone if torsion_bar_torque > 0 else torsion_bar_torque + deadzone
+  return apply_angle + clip(torque, -limit, limit) * strength
 
 class CarController(CarControllerBase):
   def __init__(self, dbc_name, CP, VM):
@@ -22,14 +33,16 @@ class CarController(CarControllerBase):
 
     can_sends = []
 
-    # Temp disable steering on a hands_on_fault, and allow for user override
-    hands_on_fault = CS.steer_warning == "EAC_ERROR_HANDS_ON" and CS.hands_on_level >= 3
-    lkas_enabled = CC.latActive and not hands_on_fault
+    # Temp disable steering when hands-on, and allow for user override
+    lkas_enabled = CC.latActive and CS.hands_on_level < 2
 
     if self.frame % 2 == 0:
       if lkas_enabled:
         # Angular rate limit based on speed
         apply_angle = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgo, CarControllerParams)
+
+        # Update steering angle request with user input torque
+        apply_angle = torque_blended_angle(apply_angle, CS.out.steeringTorque, CS.out.vEgo)
 
         # To not fault the EPS
         apply_angle = clip(apply_angle, CS.out.steeringAngleDeg - 20, CS.out.steeringAngleDeg + 20)
@@ -49,10 +62,6 @@ class CarController(CarControllerBase):
 
       counter = CS.das_control["DAS_controlCounter"]
       can_sends.append(self.tesla_can.create_longitudinal_commands(acc_state, target_speed, min_accel, max_accel, counter))
-
-    # Cancel on user steering override, since there is no steering torque blending
-    if hands_on_fault:
-      pcm_cancel_cmd = True
 
     # Sent cancel request only if ACC is enabled
     if self.frame % 10 == 0 and pcm_cancel_cmd and CS.acc_enabled:
