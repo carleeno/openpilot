@@ -1,4 +1,4 @@
-from openpilot.common.numpy_fast import clip, interp
+from openpilot.common.numpy_fast import clip
 from opendbc.can.packer import CANPacker
 from openpilot.selfdrive.car import apply_std_steer_angle_limits
 from openpilot.selfdrive.car.interfaces import CarControllerBase
@@ -7,7 +7,11 @@ from openpilot.selfdrive.car.tesla.values import DBC, CarControllerParams
 
 
 def torque_blended_angle(apply_angle, torsion_bar_torque, speed):
-  strength = interp(speed, CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_BP, CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_V)
+  if speed <= 0.01:
+    strength = CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_MAX
+  else:
+    strength = CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_K / speed
+    strength = clip(strength, 0, CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_MAX)
   deadzone = CarControllerParams.TORQUE_TO_ANGLE_DEADZONE
   limit = CarControllerParams.TORQUE_TO_ANGLE_CLIP
 
