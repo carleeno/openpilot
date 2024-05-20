@@ -6,12 +6,7 @@ from openpilot.selfdrive.car.tesla.teslacan import TeslaCAN
 from openpilot.selfdrive.car.tesla.values import DBC, CarControllerParams
 
 
-def torque_blended_angle(apply_angle, torsion_bar_torque, speed):
-  if speed <= 0.01:
-    strength = CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_MAX
-  else:
-    strength = CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_K / speed
-    strength = clip(strength, 0, CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_MAX)
+def torque_blended_angle(apply_angle, torsion_bar_torque):
   deadzone = CarControllerParams.TORQUE_TO_ANGLE_DEADZONE
   limit = CarControllerParams.TORQUE_TO_ANGLE_CLIP
 
@@ -19,7 +14,7 @@ def torque_blended_angle(apply_angle, torsion_bar_torque, speed):
     torque = 0
   else:
     torque = torsion_bar_torque - deadzone if torsion_bar_torque > 0 else torsion_bar_torque + deadzone
-  return apply_angle + clip(torque, -limit, limit) * strength
+  return apply_angle + clip(torque, -limit, limit) * CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER
 
 class CarController(CarControllerBase):
   def __init__(self, dbc_name, CP, VM):
@@ -42,11 +37,11 @@ class CarController(CarControllerBase):
 
     if self.frame % 2 == 0:
       if lkas_enabled:
-        # Angular rate limit based on speed
-        apply_angle = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgo, CarControllerParams)
-
         # Update steering angle request with user input torque
-        apply_angle = torque_blended_angle(apply_angle, CS.out.steeringTorque, CS.out.vEgo)
+        apply_angle = torque_blended_angle(actuators.steeringAngleDeg, CS.out.steeringTorque)
+
+        # Angular rate limit based on speed
+        apply_angle = apply_std_steer_angle_limits(apply_angle, self.apply_angle_last, CS.out.vEgo, CarControllerParams)
 
         # To not fault the EPS
         apply_angle = clip(apply_angle, CS.out.steeringAngleDeg - 20, CS.out.steeringAngleDeg + 20)

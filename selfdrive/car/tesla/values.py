@@ -73,8 +73,7 @@ class CarControllerParams:
   JERK_LIMIT_MAX = 8
   JERK_LIMIT_MIN = -8
   ACCEL_TO_SPEED_MULTIPLIER = 3
-  TORQUE_TO_ANGLE_MULTIPLIER_K = 16.8  # Higher = easier to influence the steering manually, divided by vEgo
-  TORQUE_TO_ANGLE_MULTIPLIER_MAX = 5  # Maximum torque multiplier for very low speeds, to avoid infinity
+  TORQUE_TO_ANGLE_MULTIPLIER = 4  # Higher = easier to influence the steering manually
   TORQUE_TO_ANGLE_DEADZONE = 0.5  # This equates to hands-on level 1, so we don't allow override if not hands-on
   TORQUE_TO_ANGLE_CLIP = 3. # Steering disengages at 2.5 Nm, this limit exists only in case the EPAS gives bad data
 
