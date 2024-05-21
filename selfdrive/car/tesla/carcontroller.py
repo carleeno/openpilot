@@ -27,6 +27,7 @@ class CarController(CarControllerBase):
     self.CP = CP
     self.frame = 0
     self.apply_angle_last = 0
+    self.user_override_last = False
     self.packer = CANPacker(dbc_name)
     self.pt_packer = CANPacker(DBC[CP.carFingerprint]['pt'])
     self.tesla_can = TeslaCAN(self.packer, self.pt_packer)
@@ -38,8 +39,11 @@ class CarController(CarControllerBase):
 
     can_sends = []
 
-    # Temp disable steering when hands-on, and allow for user override
-    lkas_enabled = CC.latActive and CS.hands_on_level < 2
+    # Temp disable steering when hands-on to allow for user override
+    # If already overriding, keep overriding until hands-off (hysteresis)
+    user_override = CS.hands_on_level >= 3 or (self.user_override_last and CS.hands_on_level > 0)
+    self.user_override_last = user_override
+    lkas_enabled = CC.latActive and not user_override
 
     if self.frame % 2 == 0:
       if lkas_enabled:
