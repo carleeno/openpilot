@@ -8,13 +8,19 @@ from openpilot.selfdrive.car.tesla.values import DBC, CarControllerParams
 
 def torque_blended_angle(apply_angle, torsion_bar_torque):
   deadzone = CarControllerParams.TORQUE_TO_ANGLE_DEADZONE
-  limit = CarControllerParams.TORQUE_TO_ANGLE_CLIP
-
   if abs(torsion_bar_torque) < deadzone:
-    torque = 0
+    return apply_angle
+
+  limit = CarControllerParams.TORQUE_TO_ANGLE_CLIP
+  if apply_angle * torsion_bar_torque >= 0:
+    # Manually steering in the same direction as OP
+    strength = CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_OUTER
   else:
-    torque = torsion_bar_torque - deadzone if torsion_bar_torque > 0 else torsion_bar_torque + deadzone
-  return apply_angle + clip(torque, -limit, limit) * CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER
+    # User is opposing OP direction
+    strength = CarControllerParams.TORQUE_TO_ANGLE_MULTIPLIER_INNER
+
+  torque = torsion_bar_torque - deadzone if torsion_bar_torque > 0 else torsion_bar_torque + deadzone
+  return apply_angle + clip(torque, -limit, limit) * strength
 
 class CarController(CarControllerBase):
   def __init__(self, dbc_name, CP, VM):
