@@ -27,7 +27,7 @@ class CarController(CarControllerBase):
     self.CP = CP
     self.frame = 0
     self.apply_angle_last = 0
-    self.user_override_last = False
+    self.lkas_enabled_last = False
     self.packer = CANPacker(dbc_name)
     self.pt_packer = CANPacker(DBC[CP.carFingerprint]['pt'])
     self.tesla_can = TeslaCAN(self.packer, self.pt_packer)
@@ -39,13 +39,14 @@ class CarController(CarControllerBase):
 
     can_sends = []
 
-    # Temp disable steering when hands-on to allow for user override
-    # If already overriding, keep overriding until hands-off (hysteresis)
-    user_override = CS.hands_on_level >= 3 or (self.user_override_last and CS.hands_on_level > 0)
-    self.user_override_last = user_override
-    lkas_enabled = CC.latActive and not user_override
-
     if self.frame % 2 == 0:
+      # Temp disable steering when hands-on to allow for user override
+      user_override = (CS.hands_on_level > 1 or  # User applying lots of force or...
+        ((not self.lkas_enabled_last) and CS.hands_on_level > 0) or  # force hysteresis or...
+        ((not self.lkas_enabled_last) and abs(CS.out.steeringAngleDeg - actuators.steeringAngleDeg) > 10))  # continued disagreement.
+      lkas_enabled = CC.latActive and not user_override
+      self.lkas_enabled_last = lkas_enabled
+
       if lkas_enabled:
         # Update steering angle request with user input torque
         apply_angle = torque_blended_angle(actuators.steeringAngleDeg, CS.out.steeringTorque)
