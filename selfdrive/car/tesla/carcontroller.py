@@ -42,7 +42,9 @@ class CarController(CarControllerBase):
     if self.frame % 2 == 0:
       # Detect a user override of the steering wheel when...
       user_override = (CS.hands_on_level >= 3 or  # user is applying lots of force or...
-        (self.user_override_last and abs(CS.out.steeringAngleDeg - actuators.steeringAngleDeg) > 10))  # continued disagreement.
+        (self.user_override_last and
+         abs(CS.out.steeringAngleDeg - actuators.steeringAngleDeg) > CarControllerParams.CONTINUED_OVERRIDE_ANGLE) and
+         not CS.out.standstill)  # continued disagreement while moving.
 
       if not CC.latActive:
         # Reset override when disengaged to ensure a fresh activation always engages steering.
