@@ -28,6 +28,7 @@ class CarController(CarControllerBase):
     self.frame = 0
     self.apply_angle_last = 0
     self.user_override_last = False
+    self.last_hands_nanos = 0
     self.packer = CANPacker(dbc_name)
     self.pt_packer = CANPacker(DBC[CP.carFingerprint]['pt'])
     self.tesla_can = TeslaCAN(self.packer, self.pt_packer)
@@ -46,8 +47,14 @@ class CarController(CarControllerBase):
          abs(CS.out.steeringAngleDeg - actuators.steeringAngleDeg) > CarControllerParams.CONTINUED_OVERRIDE_ANGLE) and
          not CS.out.standstill)  # continued disagreement while moving.
 
+      # If fully hands off for 1 second then reset override (in case of continued disagreement above)
+      if CS.hands_on_level > 0:
+        self.last_hands_nanos = now_nanos
+      elif now_nanos - self.last_hands_nanos > 1e9:
+        user_override = False
+
+      # Reset override when disengaged to ensure a fresh activation always engages steering.
       if not CC.latActive:
-        # Reset override when disengaged to ensure a fresh activation always engages steering.
         user_override = False
 
       self.user_override_last = user_override
