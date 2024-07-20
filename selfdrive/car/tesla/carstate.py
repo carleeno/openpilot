@@ -23,8 +23,12 @@ class CarState(CarStateBase):
     ret = car.CarState.new_message()
 
     # Vehicle speed
+    speed_units = self.can_define.dv["DI_state"]["DI_speedUnits"].get(int(cp.vl["DI_state"]["DI_speedUnits"]), None)
+    ui_speed_conversion = CV.MPH_TO_MS if speed_units == "MPH" else CV.KPH_TO_MS
+
     ret.vEgoRaw = cp.vl["ESP_B"]["ESP_vehicleSpeed"] * CV.KPH_TO_MS
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
+    ret.vEgoCluster = cp.vl["DI_speed"]["DI_uiSpeed"] * ui_speed_conversion
     ret.standstill = (ret.vEgo < 0.1)
 
     # Gas pedal
@@ -51,14 +55,10 @@ class CarState(CarStateBase):
 
     # Cruise state
     cruise_state = self.can_define.dv["DI_state"]["DI_cruiseState"].get(int(cp.vl["DI_state"]["DI_cruiseState"]), None)
-    speed_units = self.can_define.dv["DI_state"]["DI_speedUnits"].get(int(cp.vl["DI_state"]["DI_speedUnits"]), None)
 
     self.acc_enabled = (cruise_state in ("ENABLED", "STANDSTILL", "OVERRIDE", "PRE_FAULT", "PRE_CANCEL"))
     ret.cruiseState.enabled = self.acc_enabled
-    if speed_units == "KPH":
-      ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * CV.KPH_TO_MS
-    elif speed_units == "MPH":
-      ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * CV.MPH_TO_MS
+    ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * ui_speed_conversion
     ret.cruiseState.available = ((cruise_state == "STANDBY") or ret.cruiseState.enabled)
     ret.cruiseState.standstill = False  # This needs to be false, since we can resume from stop without sending anything special
 
