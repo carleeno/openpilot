@@ -19,13 +19,8 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerControlType = car.CarParams.SteerControlType.angle
 
-    # Set kP and kI to 0 over the whole speed range to have the planner accel as actuator command
-    ret.longitudinalTuning.kpBP = [0]
-    ret.longitudinalTuning.kpV = [0]
-    ret.longitudinalTuning.kiBP = [0]
-    ret.longitudinalTuning.kiV = [0]
-    ret.longitudinalActuatorDelayUpperBound = 0.5 # s
-    ret.radarTimeStep = (1.0 / 8) # 8Hz
+    ret.longitudinalActuatorDelay = 0.5 # s
+    ret.radarUnavailable = True
 
     params = Params()
     stock_acc = params.get_bool("StockTaccEnabledToggle")
