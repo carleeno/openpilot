@@ -139,7 +139,7 @@ class CarState(CarStateBase):
       ("SCCM_steeringAngleSensor", 100),
       ("DAS_bodyControls", 2),
       ("ID3F5VCFRONT_lighting", 10),
-      ("DI_speed", 10),
+      ("DI_speed", 100),
     ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, CANBUS.vehicle)
