@@ -68,6 +68,6 @@ class TeslaCAN:
     values = esp_status.copy()
     values["ESP_driverBrakeApply"] = 2
     values["ESP_brakeApply"] = 1
-    data = self.packer.make_can_msg("ESP_status", CANBUS.autopilot_party, values)[2]
+    data = self.packer.make_can_msg("ESP_status", CANBUS.party, values)[2]
     values["ESP_statusChecksum"] = self.checksum(0x145, data[1:])
-    return self.packer.make_can_msg("ESP_status", CANBUS.autopilot_party, values)
+    return self.packer.make_can_msg("ESP_status", CANBUS.party, values)
