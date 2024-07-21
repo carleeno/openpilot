@@ -56,9 +56,7 @@ class CarController(CarControllerBase):
 
     # Sent cancel request only if ACC is enabled
     if pcm_cancel_cmd and CS.acc_enabled:
-      counter = CS.das_control["DAS_controlCounter"]
-      acc_state = 13  # ACC_CANCEL_GENERIC_SILENT
-      can_sends.append(self.tesla_can.create_longitudinal_commands(acc_state, 0, 0, 0, counter))
+      can_sends.append(self.tesla_can.create_cancel_command(CS.ibst_status_counter))
 
     # TODO: HUD control
 

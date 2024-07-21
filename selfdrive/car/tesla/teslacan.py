@@ -62,3 +62,17 @@ class TeslaCAN:
               }
 
     return self.pt_packer.make_can_msg("SCCM_rightStalk", CANBUS.vehicle, values)
+
+  def create_cancel_command(self, counter):
+    # Send brake press payload to AP computer to cancel ACC
+    values = {
+      "IBST_statusChecksum": 0,
+      "IBST_statusCounter": counter,
+      "IBST_iBoosterStatus": 6,  # IBOOSTER_ACTUATION
+      "IBST_driverBrakeApply": 2,  # DRIVER_APPLYING_BRAKES
+      "IBST_internalState": 2,  # LOCAL_BRAKE_REQUEST
+      "IBST_sInputRodDriver": 2,  # Brake pressed 2mm
+    }
+    data = self.packer.make_can_msg("IBST_status", CANBUS.autopilot_party, values)[2]
+    values["IBST_statusChecksum"] = self.checksum(0x39d, data[1:])
+    return self.packer.make_can_msg("IBST_status", CANBUS.autopilot_party, values)
