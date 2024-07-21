@@ -73,6 +73,6 @@ class TeslaCAN:
       "IBST_internalState": 2,  # LOCAL_BRAKE_REQUEST
       "IBST_sInputRodDriver": 2,  # Brake pressed 2mm
     }
-    data = self.packer.make_can_msg("IBST_status", CANBUS.autopilot_party, values)[2]
+    data = self.packer.make_can_msg("IBST_status", CANBUS.party, values)[2]
     values["IBST_statusChecksum"] = self.checksum(0x39d, data[1:])
-    return self.packer.make_can_msg("IBST_status", CANBUS.autopilot_party, values)
+    return self.packer.make_can_msg("IBST_status", CANBUS.party, values)
