@@ -55,8 +55,8 @@ class CarController(CarControllerBase):
       pcm_cancel_cmd = True
 
     # Sent cancel request only if ACC is enabled
-    if pcm_cancel_cmd and CS.acc_enabled:
-      can_sends.append(self.tesla_can.create_cancel_command(CS.ibst_status_counter))
+    if self.frame % 2 == 0 and pcm_cancel_cmd and CS.acc_enabled:
+      can_sends.append(self.tesla_can.create_cancel_command(CS.esp_status))
 
     # TODO: HUD control
 
