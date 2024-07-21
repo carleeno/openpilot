@@ -11,6 +11,7 @@ class CarState(CarStateBase):
     super().__init__(CP)
     self.button_states = {button.event_type: False for button in BUTTONS}
     self.can_define = CANDefine(DBC[CP.carFingerprint]['chassis'])
+    self.can_define_adas = CANDefine(DBC[CP.carFingerprint]['pt'])
 
     # Needed by carcontroller
     self.hands_on_level = 0
@@ -23,14 +24,14 @@ class CarState(CarStateBase):
     ret = car.CarState.new_message()
 
     # Vehicle speed
-    ui_speed_units = self.can_define.dv["DI_speed"]["DI_uiSpeedUnits"].get(int(cp.vl["DI_speed"]["DI_uiSpeedUnits"]), None)
+    ui_speed_units = self.can_define_adas.dv["DI_speed"]["DI_uiSpeedUnits"].get(int(cp_adas.vl["DI_speed"]["DI_uiSpeedUnits"]), None)
 
     ret.vEgoRaw = cp.vl["ESP_B"]["ESP_vehicleSpeed"] * CV.KPH_TO_MS
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     if ui_speed_units == "KPH":
-      ret.vEgoCluster = cp.vl["DI_speed"]["DI_uiSpeed"] * CV.KPH_TO_MS
+      ret.vEgoCluster = cp_adas.vl["DI_speed"]["DI_uiSpeed"] * CV.KPH_TO_MS
     elif ui_speed_units == "MPH":
-      ret.vEgoCluster = cp.vl["DI_speed"]["DI_uiSpeed"] * CV.MPH_TO_MS
+      ret.vEgoCluster = cp_adas.vl["DI_speed"]["DI_uiSpeed"] * CV.MPH_TO_MS
     ret.standstill = (ret.vEgo < 0.1)
 
     # Gas pedal
@@ -138,6 +139,7 @@ class CarState(CarStateBase):
       ("SCCM_steeringAngleSensor", 100),
       ("DAS_bodyControls", 2),
       ("ID3F5VCFRONT_lighting", 10),
+      ("DI_speed", 10),
     ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, CANBUS.vehicle)
