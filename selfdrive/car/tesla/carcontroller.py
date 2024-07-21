@@ -51,14 +51,14 @@ class CarController(CarControllerBase):
       can_sends.append(self.tesla_can.create_longitudinal_commands(acc_state, target_speed, min_accel, max_accel, counter))
 
     # Cancel on user steering override, since there is no steering torque blending
-    if hands_on_fault:
+    if hands_on_fault and CS.acc_enabled:
       pcm_cancel_cmd = True
 
     # Sent cancel request only if ACC is enabled
-    if self.frame % 10 == 0 and pcm_cancel_cmd and CS.acc_enabled:
-      counter = int(CS.sccm_right_stalk_counter)
-      can_sends.append(self.tesla_can.right_stalk_press((counter + 1) % 16 , 1))  # half up (cancel acc)
-      can_sends.append(self.tesla_can.right_stalk_press((counter + 2) % 16, 0))  # to prevent neutral gear warning
+    if pcm_cancel_cmd and CS.acc_enabled:
+      counter = CS.das_control["DAS_controlCounter"]
+      acc_state = 13  # ACC_CANCEL_GENERIC_SILENT
+      can_sends.append(self.tesla_can.create_longitudinal_commands(acc_state, 0, 0, 0, counter))
 
     # TODO: HUD control
 
